@@ -1,6 +1,9 @@
-#include "HogGetter.h"
-#include <windows.h>
-
+#include <bits/stdc++.h>
+#include <vector>
+#include <iostream>
+#include <opencv2/opencv.hpp>
+using namespace std;
+using namespace cv;
 
 int main(int argc, char const *argv[]) {
     cv::VideoCapture cp(0);
@@ -58,7 +61,7 @@ int main(int argc, char const *argv[]) {
             continue;
         }
         sld_win_cols = frame.cols/slide_windows_num;
-        sld_win_rows = 80;
+        sld_win_rows = 10;
         for (auto i = 0; i < slide_windows_num; i++) {
             sld_wins.push_back(cv::Rect(i*sld_win_cols, 0, sld_win_cols, sld_win_rows));
         }
@@ -66,6 +69,7 @@ int main(int argc, char const *argv[]) {
     }
     while (1) {
         cp >> frame;
+        cv::GaussianBlur(frame, frame, cv::Size(7, 7), 0);
         if (frame.empty()) {
             cerr << __LINE__ <<endl;
             return -1;
