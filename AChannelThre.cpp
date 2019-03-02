@@ -36,8 +36,8 @@ int main() {
     cv::namedWindow("params");
 
     // A channnel thre
-    int a_min;
-    int a_max;
+    int a_min = 0;
+    int a_max = 116;
     cv::createTrackbar("a_min", "params", &a_min, 255);
     cv::createTrackbar("a_max", "params", &a_max, 255);
     
@@ -71,23 +71,46 @@ int main() {
         cv::morphologyEx(thre_result, thre_result, MORPH_OPEN, open_kernal);
         cv::morphologyEx(thre_result, mor_gradiant, MORPH_GRADIENT, mor_kernal);
 
-        std::vector<cv::Vec2f> lines;
-        cv::HoughLines(mor_gradiant, lines, 200., 0.1, 20);
-        for (int i = 0; i<lines.size(); i++) {
-            double rho = lines[i][0];
-            double theta = lines[i][1];
-            int x = rho/cos(theta);
-            int y = rho/sin(theta);
-            cout<<x<<' '<<0<<endl
-                <<0<<' '<<y<<endl;
-            cv::line(frame, cv::Point(0, y), cv::POint(x, 0), cv::Scalar(0, 0, 255));
+        std::vector<cv::Vec4i> lines;
+        cv::HoughLinesP(mor_gradiant, lines, 1., CV_PI/180, 100);
+
+        cv::Mat train_data(lines.size(), 1, CV_32FC1);
+        cv::Mat labels, center;
+        // cout<<lines.size()<<endl;
+        for (size_t i = 0; i < lines.size(); i++) {
+            Vec4i plines=lines[i];
+            // line(frame,Point(plines[0],plines[1]),Point(plines[2],plines[3]),cv::Scalar(0, 0, 255),3);
+            double distance = sqrt(1.0*(plines[0]-plines[2])*(plines[0]-plines[2])
+                                    + (plines[1]-plines[3])*(plines[1]-plines[3]));
+            double delta_y = 1.0*plines[1] - plines[3];
+            // cout<<delta_y/distance<<endl;
+            train_data.at<float>(i, 0) = 1.0*(plines[3]-plines[1]) / (plines[2]-plines[0]);
+        }
+        // cout<<endl;
+        int k = 2;
+        int attemp = 10;
+        cv::TermCriteria term_criteria = cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 100, 0.01);
+        // cout<<train_data.rows<<endl;
+        if (train_data.rows > 2) {
+            cv::kmeans(train_data, k, labels, term_criteria, attemp, cv::KMEANS_PP_CENTERS, center);
+            // cout<<"here"<<endl;
+        }
+        for (int i = 0; i < labels.rows; i++) {
+            Vec4f plines=lines[i];
+            if (labels.at<float>(i, 0) == 0) {
+                line(frame,Point(plines[0],plines[1]),Point(plines[2],plines[3]),cv::Scalar(0, 0, 255),3);
+            }
+            else {
+                line(frame,Point(plines[0],plines[1]),Point(plines[2],plines[3]),cv::Scalar(0, 255, 0),3);
+            }
         }
 
         cv::imshow("living", frame);
         cv::imshow("thre_result", thre_result);
         cv::imshow("mor_gradiant", mor_gradiant);
-        char key = cv::waitKey(1);
+        char key = cv::waitKey();
         if (key == 'q') {
+            cout<<"??????"<<endl;
             break;
         }
     }

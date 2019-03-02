@@ -10,7 +10,7 @@ int main(int argc, char const *argv[]) {
     cv::Mat frame;
     
     int slide_windows_num = 32;
-    int sld_win_cols;
+    int sld_win7_cols;
     int sld_win_rows;
     std::vector<cv::Rect> sld_wins;
     int sld_step = 10;
