@@ -28,6 +28,22 @@ cv::Mat GetUsedChannel(cv::Mat& src_img, int flag) {
     }
 }
 
+int slide_windows_num = 32;
+int sld_win_cols;
+int sld_win_rows;
+std::vector<cv::Rect> sld_wins;
+int sld_step = 10;
+double win_rate_thre = 0.6;
+
+void Slide(cv::Mat& binary_image) {
+    // get integral image
+    cv::Mat integral_image;
+    cv::integral(binary_image, integral_image);
+    integral_image /= 255;
+
+    // init slide wins
+}
+
 
 int main() {
     cv::VideoCapture cp(CP_OPEN);
@@ -65,50 +81,86 @@ int main() {
 
         cv::Mat thre_result = used_channel>=a_min & used_channel<=a_max;
         
-        cv::Mat mor_gradiant;
         cv::Mat open_kernal = cv::getStructuringElement(MORPH_RECT, cv::Size(open_kernal_size*2+1, open_kernal_size*2+1));
-        cv::Mat mor_kernal = cv::getStructuringElement(MORPH_RECT, cv::Size(morgrad_kernal_size*2+1, morgrad_kernal_size*2+1));
         cv::morphologyEx(thre_result, thre_result, MORPH_OPEN, open_kernal);
-        cv::morphologyEx(thre_result, mor_gradiant, MORPH_GRADIENT, mor_kernal);
+
+        cv::Mat test_hough = cv::Mat::zeros(300, 300, CV_8UC1);
+        // test_hough.at<uchar>(23, 0) = 255;
+        // test_hough.at<uchar>(23, 12) = 255;
+        // test_hough.at<uchar>(23, 24) = 255;
+        // test_hough.at<uchar>(23, 36) = 255;
+        // test_hough.at<uchar>(23, 40) = 255;
+        // test_hough.at<uchar>(23, 50) = 255;
+        // test_hough.at<uchar>(23, 60) = 255;
+        // test_hough.at<uchar>(23, 70) = 255;
+        // test_hough.at<uchar>(23, 80) = 255;
+        // test_hough.at<uchar>(23, 90) = 255;
+        // test_hough.at<uchar>(23, 100) = 255;
+        cv::line(test_hough, cv::Point(0, 155), cv::Point(5, 155), 255, 5);
+        cv::line(test_hough, cv::Point(20, 155), cv::Point(25, 155), 255, 5);
+        cv::line(test_hough, cv::Point(70, 155), cv::Point(75, 155), 255, 5);
+        cv::line(test_hough, cv::Point(80, 155), cv::Point(110, 155), 255, 5);
+        cv::line(test_hough, cv::Point(120, 155), cv::Point(290, 155), 255, 5);
+        cv::line(test_hough, cv::Point(0, 155), cv::Point(300, 155), 255, 10);
 
         std::vector<cv::Vec4i> lines;
-        cv::HoughLinesP(mor_gradiant, lines, 1., CV_PI/180, 100);
-
-        cv::Mat train_data(lines.size(), 1, CV_32FC1);
-        cv::Mat labels, center;
-        // cout<<lines.size()<<endl;
+        cv::HoughLinesP(test_hough, lines, 10, CV_PI/45, 5);
         for (size_t i = 0; i < lines.size(); i++) {
+            cout<<"yayaya"<<endl;
             Vec4i plines=lines[i];
-            // line(frame,Point(plines[0],plines[1]),Point(plines[2],plines[3]),cv::Scalar(0, 0, 255),3);
-            double distance = sqrt(1.0*(plines[0]-plines[2])*(plines[0]-plines[2])
-                                    + (plines[1]-plines[3])*(plines[1]-plines[3]));
-            double delta_y = 1.0*plines[1] - plines[3];
-            // cout<<delta_y/distance<<endl;
-            train_data.at<float>(i, 0) = 1.0*(plines[3]-plines[1]) / (plines[2]-plines[0]);
+            cout<<plines<<endl;
+            line(test_hough,Point(plines[0],plines[1]),Point(plines[2],plines[3]),cv::Scalar(0, 0, 255),3);
         }
-        // cout<<endl;
-        int k = 2;
-        int attemp = 10;
-        cv::TermCriteria term_criteria = cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 100, 0.01);
-        // cout<<train_data.rows<<endl;
-        if (train_data.rows > 2) {
-            cv::kmeans(train_data, k, labels, term_criteria, attemp, cv::KMEANS_PP_CENTERS, center);
-            // cout<<"here"<<endl;
-        }
-        for (int i = 0; i < labels.rows; i++) {
-            Vec4f plines=lines[i];
-            if (labels.at<float>(i, 0) == 0) {
-                line(frame,Point(plines[0],plines[1]),Point(plines[2],plines[3]),cv::Scalar(0, 0, 255),3);
-            }
-            else {
-                line(frame,Point(plines[0],plines[1]),Point(plines[2],plines[3]),cv::Scalar(0, 255, 0),3);
-            }
-        }
+        cv::imshow("test", test_hough);
+
+
+
+        //////////////////////////////////abandon Hough version////////////////////////////////
+        // cv::Mat mor_gradiant;
+        // cv::Mat open_kernal = cv::getStructuringElement(MORPH_RECT, cv::Size(open_kernal_size*2+1, open_kernal_size*2+1));
+        // cv::Mat mor_kernal = cv::getStructuringElement(MORPH_RECT, cv::Size(morgrad_kernal_size*2+1, morgrad_kernal_size*2+1));
+        // cv::morphologyEx(thre_result, thre_result, MORPH_OPEN, open_kernal);
+        // cv::morphologyEx(thre_result, mor_gradiant, MORPH_GRADIENT, mor_kernal);
+
+
+        // std::vector<cv::Vec4i> lines;
+        // cv::HoughLinesP(mor_gradiant, lines, 1., CV_PI/180, 100);
+
+        // cv::Mat train_data(lines.size(), 1, CV_32FC1);
+        // cv::Mat labels, center;
+        // // cout<<lines.size()<<endl;
+        // for (size_t i = 0; i < lines.size(); i++) {
+        //     Vec4i plines=lines[i];
+        //     // line(frame,Point(plines[0],plines[1]),Point(plines[2],plines[3]),cv::Scalar(0, 0, 255),3);
+        //     double distance = sqrt(1.0*(plines[0]-plines[2])*(plines[0]-plines[2])
+        //                             + (plines[1]-plines[3])*(plines[1]-plines[3]));
+        //     double delta_y = 1.0*plines[1] - plines[3];
+        //     // cout<<delta_y/distance<<endl;
+        //     train_data.at<float>(i, 0) = 1.0*(plines[3]-plines[1]) / (plines[2]-plines[0]);
+        // }
+        // // cout<<endl;
+        // int k = 2;
+        // int attemp = 10;
+        // cv::TermCriteria term_criteria = cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 100, 0.01);
+        // // cout<<train_data.rows<<endl;
+        // if (train_data.rows > 2) {
+        //     cv::kmeans(train_data, k, labels, term_criteria, attemp, cv::KMEANS_PP_CENTERS, center);
+        //     // cout<<"here"<<endl;
+        // }
+        // for (int i = 0; i < labels.rows; i++) {
+        //     Vec4f plines=lines[i];
+        //     if (labels.at<float>(i, 0) == 0) {
+        //         line(frame,Point(plines[0],plines[1]),Point(plines[2],plines[3]),cv::Scalar(0, 0, 255),3);
+        //     }
+        //     else {
+        //         line(frame,Point(plines[0],plines[1]),Point(plines[2],plines[3]),cv::Scalar(0, 255, 0),3);
+        //     }
+        // }
 
         cv::imshow("living", frame);
         cv::imshow("thre_result", thre_result);
-        cv::imshow("mor_gradiant", mor_gradiant);
-        char key = cv::waitKey();
+        // cv::imshow("mor_gradiant", mor_gradiant);
+        char key = cv::waitKey(1);
         if (key == 'q') {
             cout<<"??????"<<endl;
             break;
