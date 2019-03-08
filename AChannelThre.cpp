@@ -5,7 +5,9 @@
 using namespace std;
 using namespace cv;
 
-#define CP_OPEN 0
+// #define CP_OPEN 0
+#define CP_OPEN "/media/alex/Data/baseRelate/pic_data/frame%04d.jpg"
+
 
 enum {H, S, V, L, A, B};
 
@@ -83,35 +85,6 @@ int main() {
         
         cv::Mat open_kernal = cv::getStructuringElement(MORPH_RECT, cv::Size(open_kernal_size*2+1, open_kernal_size*2+1));
         cv::morphologyEx(thre_result, thre_result, MORPH_OPEN, open_kernal);
-
-        cv::Mat test_hough = cv::Mat::zeros(300, 300, CV_8UC1);
-        // test_hough.at<uchar>(23, 0) = 255;
-        // test_hough.at<uchar>(23, 12) = 255;
-        // test_hough.at<uchar>(23, 24) = 255;
-        // test_hough.at<uchar>(23, 36) = 255;
-        // test_hough.at<uchar>(23, 40) = 255;
-        // test_hough.at<uchar>(23, 50) = 255;
-        // test_hough.at<uchar>(23, 60) = 255;
-        // test_hough.at<uchar>(23, 70) = 255;
-        // test_hough.at<uchar>(23, 80) = 255;
-        // test_hough.at<uchar>(23, 90) = 255;
-        // test_hough.at<uchar>(23, 100) = 255;
-        cv::line(test_hough, cv::Point(0, 155), cv::Point(5, 155), 255, 5);
-        cv::line(test_hough, cv::Point(20, 155), cv::Point(25, 155), 255, 5);
-        cv::line(test_hough, cv::Point(70, 155), cv::Point(75, 155), 255, 5);
-        cv::line(test_hough, cv::Point(80, 155), cv::Point(110, 155), 255, 5);
-        cv::line(test_hough, cv::Point(120, 155), cv::Point(290, 155), 255, 5);
-        cv::line(test_hough, cv::Point(0, 155), cv::Point(300, 155), 255, 10);
-
-        std::vector<cv::Vec4i> lines;
-        cv::HoughLinesP(test_hough, lines, 10, CV_PI/45, 5);
-        for (size_t i = 0; i < lines.size(); i++) {
-            cout<<"yayaya"<<endl;
-            Vec4i plines=lines[i];
-            cout<<plines<<endl;
-            line(test_hough,Point(plines[0],plines[1]),Point(plines[2],plines[3]),cv::Scalar(0, 0, 255),3);
-        }
-        cv::imshow("test", test_hough);
 
 
 

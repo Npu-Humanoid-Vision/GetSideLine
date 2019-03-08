@@ -1,4 +1,6 @@
 #include <bits/stdc++.h>
+#include <iostream>
+#include <vector>
 #include <opencv2/opencv.hpp>
 using namespace std;
 using namespace cv;
@@ -29,6 +31,15 @@ cv::Mat GetUsedChannel(cv::Mat& src_img, int flag) {
     }
 }
 
+std::vector<cv::Vec2f> StandardHough(cv::Mat binary_image, int line_vote_thre = 66, int morgrad_kernal_size = 2) {
+    cv::Mat mor_gradiant;
+    cv::Mat grad_kernal = cv::getStructuringElement(MORPH_RECT, cv::Size(morgrad_kernal_size*2+1, morgrad_kernal_size*2+1));
+    cv::morphologyEx(binary_image, mor_gradiant, MORPH_GRADIENT, grad_kernal);
+
+    std::vector<cv::Vec2f> lines;
+    HoughLines(mor_gradiant, lines, 1, CV_PI / 180, line_vote_thre, 0, 0);
+    return lines;
+}
 
 int main(int argc, char const *argv[]) {
     cv::VideoCapture cp(CP_OPEN);
@@ -48,6 +59,12 @@ int main(int argc, char const *argv[]) {
     cv::createTrackbar("vert_ker_size", "params", &vertical_kernal_size, 233);
     cv::createTrackbar("hori_ker_size", "params", &horizontal_kernal_size, 233);
     cv::createTrackbar("gaus_ker_size", "params", &gaus_kernal_size, 66);
+
+    // hough lines relate
+    int mor_kernal_size = 1;
+    int line_vote_thre = 66;
+    cv::createTrackbar("line_vote_thre", "params", &line_vote_thre, 233);
+    cv::createTrackbar("mor_ker_size", "params", &mor_kernal_size, 66);
 
     while (1) {
         cp >> frame;
@@ -75,6 +92,28 @@ int main(int argc, char const *argv[]) {
         cv::Mat thre_minus_veri_eroded_hori_eroded;
         cv::erode(thre_minus_veri_eroded, thre_minus_veri_eroded_hori_eroded, hori_kernal);
 
+        std::vector<cv::Vec2f> lines = StandardHough(thre_minus_veri_eroded_hori_eroded, line_vote_thre, mor_kernal_size);
+        // thre_minus_veri_eroded_hori_eroded.convertTo(thre_minus_veri_eroded_hori_eroded, CV_8UC3);
+        cv::cvtColor(thre_minus_veri_eroded_hori_eroded, thre_minus_veri_eroded_hori_eroded, CV_GRAY2BGR);
+        cout<<lines.size()<<endl;
+        if (lines.size() == 0) {
+            continue;
+        }
+        for (size_t i = 0; i < lines.size(); i++) {
+            cout<<lines[i]<<endl;
+            cout<<"h"<<endl;
+            float rho = lines[i][0]; 
+            float theta = lines[i][1]; 
+            Point pt1, pt2;
+            double a = cos(theta), b = sin(theta);
+            double x0 = a*rho, y0 = b*rho;
+            pt1.x = cvRound(x0 + 1000 * (-b));
+            pt1.y = cvRound(y0 + 1000*(a));
+            pt2.x = cvRound(x0 - 1000*(-b));
+            pt2.y = cvRound(y0 - 1000 * (a));
+
+            line(thre_minus_veri_eroded_hori_eroded, pt1, pt2, Scalar(55, 100, 195), 1, LINE_AA);
+        }
         // cv::Mat t_for_contours = thre_minus_veri_eroded.clone();
         // cv::findContours(t_for_contours, )
 
